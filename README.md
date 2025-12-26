@@ -88,11 +88,20 @@ gofacecount -min 10
 ## Sample Output
 
 ```text
-index | Count | Interface                      | Location
---------------------------------------------------------------------------------
-1     | 37    | Type                           | reflect/type.go:40
-2     | 23    | TB                             | testing/testing.go:881
-3     | 22    | Node                           | cmd/compile/internal/ir/node.go:19
+gofacecount -top 10
+
+Rank  | Meths | Interface Name                           | Location
+------------------------------------------------------------------------------------------
+1     | 37    | Type                                     | reflect/type.go:40
+2     | 23    | TB                                       | testing/testing.go:881
+3     | 22    | Node                                     | cmd/compile/internal/ir/node.go:19
+4     | 18    | TestingT                                 | runtime/importx_test.go:11
+5     | 17    | Object                                   | go/types/object.go:29
+6     | 17    | Object                                   | cmd/compile/internal/types2/object.go:26
+7     | 17    | testingT                                 | context/context_test.go:16
+8     | 15    | testDeps                                 | testing/testing.go:2192
+9     | 14    | Context                                  | cmd/internal/dwarf/dwarf.go:192
+10    | 13    | testingT                                 | time/abs_test.go:7
 
 ```
 

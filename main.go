@@ -103,7 +103,7 @@ func main() {
 	})
 
 	// Print Header
-	fmt.Printf("%-5s | %-5s | %-30s | %s\n", "Rank", "Meths", "Interface Name", "Location")
+	fmt.Printf("%-5s | %-5s | %-40s | %s\n", "Rank", "Meths", "Interface Name", "Location")
 	fmt.Println(strings.Repeat("-", 90))
 
 	for i, inf := range interfaces {
