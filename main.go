@@ -20,9 +20,9 @@ type InterfaceInfo struct {
 }
 
 func main() {
-	top := flag.Int(`top`, 0, `number of to items to print out`)
-	methodCount := flag.Int(`min`, 0, `min number of methods`)
-	vendor := flag.Bool(`vendor`, false, `include vendor folder too`)
+	top := flag.Int("top", 0, "number of top items to print out")
+	minMethods := flag.Int("min", 0, "min number of methods")
+	vendor := flag.Bool("vendor", false, "include vendor folder")
 	flag.Parse()
 
 	root := "."
@@ -34,53 +34,67 @@ func main() {
 	fset := token.NewFileSet()
 
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") {
-			return nil
-		}
-
-		// skip vendor folder if flag is false
-		if !*vendor && (strings.HasPrefix(path, "vendor/") || strings.Contains(path, "/vendor/")) {
-			return nil
-		}
-
-		f, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
+			return nil
+		}
+		if info.IsDir() {
+			// Skip vendor directories if not requested
+			if !*vendor && info.Name() == "vendor" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		// Use parser.DeclarationErrors to get better feedback
+		f, err := parser.ParseFile(fset, path, nil, parser.DeclarationErrors)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to parse %s: %v\n", path, err)
 			return nil
 		}
 
 		ast.Inspect(f, func(n ast.Node) bool {
-			// Look for type declarations
 			ts, ok := n.(*ast.TypeSpec)
 			if !ok {
 				return true
 			}
 
-			// Check if the type is an interface
 			if it, ok := ts.Type.(*ast.InterfaceType); ok {
 				count := 0
 				if it.Methods != nil {
-					count = len(it.Methods.List)
+					for _, field := range it.Methods.List {
+						// Each field can represent multiple names, though rare in interfaces
+						if len(field.Names) > 0 {
+							count += len(field.Names)
+						} else {
+							// It's an embedded interface
+							count++
+						}
+					}
 				}
 
-				pos := fset.Position(ts.Pos())
-				interfaces = append(interfaces, InterfaceInfo{
-					Name:        ts.Name.Name,
-					FilePath:    path,
-					LineNumber:  pos.Line,
-					MethodCount: count,
-				})
+				if count >= *minMethods {
+					pos := fset.Position(ts.Pos())
+					interfaces = append(interfaces, InterfaceInfo{
+						Name:        ts.Name.Name,
+						FilePath:    path,
+						LineNumber:  pos.Line,
+						MethodCount: count,
+					})
+				}
 			}
 			return true
 		})
-
 		return nil
 	})
+
 	if err != nil {
-		fmt.Printf("Error walking directory: %v\n", err)
-		return
+		fmt.Fprintf(os.Stderr, "Error walking path: %v\n", err)
+		os.Exit(1)
 	}
 
-	// Sort by MethodCount descending
 	sort.Slice(interfaces, func(i, j int) bool {
 		if interfaces[i].MethodCount == interfaces[j].MethodCount {
 			return interfaces[i].Name < interfaces[j].Name
@@ -88,17 +102,14 @@ func main() {
 		return interfaces[i].MethodCount > interfaces[j].MethodCount
 	})
 
-	fmt.Printf("%-5s | %-5s | %-30s | %s\n", "index", "Count", "Interface", "Location")
-	fmt.Println(strings.Repeat("-", 80))
+	// Print Header
+	fmt.Printf("%-5s | %-5s | %-30s | %s\n", "Rank", "Meths", "Interface Name", "Location")
+	fmt.Println(strings.Repeat("-", 90))
 
 	for i, inf := range interfaces {
 		if *top > 0 && i >= *top {
 			break
 		}
-		if *methodCount > 0 && inf.MethodCount < *methodCount {
-			break
-		}
-
-		fmt.Printf("%-5d | %-5d | %-30s | %s:%d\n", i+1, inf.MethodCount, inf.Name, inf.FilePath, inf.LineNumber)
+		fmt.Printf("%-5d | %-5d | %-40s | %s:%d\n", i+1, inf.MethodCount, inf.Name, inf.FilePath, inf.LineNumber)
 	}
 }

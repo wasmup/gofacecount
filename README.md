@@ -26,6 +26,9 @@ cd gofacecount
 ## Installation
 
 ```bash
+go install github.com/wasmup/gofacecount@latest
+
+# or
 CGO_ENABLED=0 go install -x -ldflags=-s 
 go version -m  $(which gofacecount)
 ```
@@ -87,9 +90,9 @@ gofacecount -min 10
 ```text
 index | Count | Interface                      | Location
 --------------------------------------------------------------------------------
-1     | 12    | File                           | os/types.go:15
-2     | 8     | ReadWriteCloser                | io/io.go:120
-3     | 3     | Reader                         | io/io.go:80
+1     | 37    | Type                           | reflect/type.go:40
+2     | 23    | TB                             | testing/testing.go:881
+3     | 22    | Node                           | cmd/compile/internal/ir/node.go:19
 
 ```
 
