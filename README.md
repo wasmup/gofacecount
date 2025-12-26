@@ -16,18 +16,19 @@ A command-line tool that parses Go source files to locate interface definitions,
 
 ---
 
-## Installation
-
-```bash
-go install -x -ldflags=-s github.com/wasmup/gofacecount@latest
-go version -m  $(which gofacecount)
-```
-
 # Clone the repository
 
 ```bash
 git clone https://github.com/wasmup/gofacecount.git
 cd gofacecount
+```
+
+## Installation
+
+```bash
+CGO_ENABLED=0 go install -x -ldflags=-s 
+go version -m  $(which gofacecount)
+```
 
 # Build the binary
 
